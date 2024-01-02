@@ -84,7 +84,7 @@ class Inventory:
     cursor = self.mydb.cursor()
     cursor.execute(sql, values)
     self.mydb.commit()
-
+"""
   def insertLogbook(self, issueDate, returnDate, issuedTo, customerID, bookID):
     sql = "INSERT INTO Logbook (BookIssueDate, BookReturnDate, IssuedTo, CustomerID, BookID) VALUES (%s, %s, %s, %s, %s)"
     values = (issueDate, returnDate, issuedTo, customerID, bookID)
@@ -98,3 +98,4 @@ class Inventory:
     cursor.execute(sql)
     result = cursor.fetchall()
     return result
+"""
