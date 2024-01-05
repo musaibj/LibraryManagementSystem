@@ -46,6 +46,7 @@ class Inventory:
         FOREIGN KEY (BookID) REFERENCES Books(BookID)
       )
     """)
+
   def insertCustomer(self, customerName, registrationDate, expiryDate):
     sql = """INSERT INTO Customer (CustomerName, RegistrationDate, RegistrationExpiryDate) 
             VALUES (%s, %s, %s)"""
@@ -68,7 +69,7 @@ class Inventory:
   def insertBook(self, bookName, authorName, genre, bookStatus):
     sql = """INSERT INTO Books (BookName, AuthorName, Genre, BookStatus, Quantity) 
             VALUES (%s, %s, %s, %s, %s)"""
-    values = (bookName, authorName, genre, bookStatus, quantity)
+    values = (bookName, authorName, genre, bookStatus)
     cursor = self.mydb.cursor()
     cursor.execute(sql, values)
     self.mydb.commit()
@@ -90,6 +91,7 @@ class Inventory:
   def clear(self):
     cursor = self.mydb.cursor()
     cursor.execute("DROP DATABASE Library")
+    self.mydb.commit()
 """
   def insertLogbook(self, issueDate, returnDate, issuedTo, customerID, bookID):
     sql = "INSERT INTO Logbook (BookIssueDate, BookReturnDate, IssuedTo, CustomerID, BookID) VALUES (%s, %s, %s, %s, %s)"

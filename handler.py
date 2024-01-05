@@ -2,7 +2,7 @@ import json, http
 from inventory import Inventory
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-obj = Inventory("localhost", "root", "MySQL@123", "Library")
+obj = Inventory('localhost', 'root', 'MySQL@123', 'Library')
 
 class MyHandler(BaseHTTPRequestHandler):
   def response(self, responseCode, message):
