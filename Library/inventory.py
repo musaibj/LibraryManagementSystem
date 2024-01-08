@@ -30,6 +30,7 @@ class Inventory:
         AuthorName VARCHAR(255),
         Genre VARCHAR(255),
         BookStatus VARCHAR(255)
+        Quantity TINYINT
       )
     """)
 
@@ -65,10 +66,28 @@ class Inventory:
     self.mydb.commit()
 
   def insertBook(self, bookName, authorName, genre, bookStatus):
-    sql = "INSERT INTO Books (BookName, AuthorName, Genre, BookStatus) VALUES (%s, %s, %s, %s)"
-    values = (bookName, authorName, genre, bookStatus)
-    cursor = self.mydb.cursor()
-    cursor.execute(sql, values)
+    # Check if the book already exists
+    sql_check = "SELECT * FROM Books WHERE BookName = %s"
+    values_check = (bookName,)
+    self.cursor.execute(sql_check, values_check)
+    existing_book = self.cursor.fetchone()
+
+    if existing_book:
+      # If the book exists, increment the quantity
+      quantity_index = self.cursor.column_names.index('Quantity')
+      current_quantity = existing_book[quantity_index]
+
+      new_quantity = current_quantity + 1
+
+      sql_update = "UPDATE Books SET Quantity = %s WHERE BookName = %s"
+      values_update = (new_quantity, bookName)
+      self.cursor.execute(sql_update, values_update)
+    else:
+      # If the book doesn't exist, insert a new record with quantity 1
+      sql_insert = "INSERT INTO Books (BookName, AuthorName, Genre, BookStatus, Quantity) VALUES (%s, %s, %s, %s, %s)"
+      values_insert = (bookName, authorName, genre, bookStatus, 1)
+      self.cursor.execute(sql_insert, values_insert)
+
     self.mydb.commit()
 
   def getBooks(self):
