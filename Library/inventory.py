@@ -29,8 +29,8 @@ class Inventory:
         BookName VARCHAR(255),
         AuthorName VARCHAR(255),
         Genre VARCHAR(255),
-        BookStatus VARCHAR(255)
-        Quantity TINYINT
+        BookStatus VARCHAR(255),
+        Quantity INT
       )
     """)
 
@@ -103,18 +103,15 @@ class Inventory:
     cursor = self.mydb.cursor()
     cursor.execute(sql, values)
     self.mydb.commit()
-"""
-  def insertLogbook(self, issueDate, returnDate, issuedTo, customerID, bookID):
+
+  def recordTransaction(self, bookIssueDate, bookReturnDate, issuedTo, customerID, bookID):
     sql = "INSERT INTO Logbook (BookIssueDate, BookReturnDate, IssuedTo, CustomerID, BookID) VALUES (%s, %s, %s, %s, %s)"
-    values = (issueDate, returnDate, issuedTo, customerID, bookID)
-    cursor = self.mydb.cursor()
-    cursor.execute(sql, values)
+    values = (bookIssueDate, bookReturnDate, issuedTo, customerID, bookID)
+    self.cursor.execute(sql, values)
     self.mydb.commit()
 
-  def getLogs(self):
+  def getLogbook(self):
     sql = "SELECT * FROM Logbook"
-    cursor = self.mydb.cursor()
-    cursor.execute(sql)
-    result = cursor.fetchall()
+    self.cursor.execute(sql)
+    result = self.cursor.fetchall()
     return result
-"""

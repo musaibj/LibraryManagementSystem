@@ -42,6 +42,15 @@ class MyHandler(BaseHTTPRequestHandler):
     bookName = data.get('BookName')
     obj.removeBook(bookName)
 
+  def record_transaction(self):
+    data = self.headerInfo()
+    book_issue_date = data.get('bookIssueDate')
+    book_return_date = data.get('bookReturnDate')
+    issued_to = data.get('issuedTo')
+    customer_id = data.get('customerID')
+    book_id = data.get('bookID')
+    obj.recordTransaction(book_issue_date, book_return_date, issued_to, customer_id, book_id)
+
   def do_POST(self):
     if self.path == '/register_customer':
       self.register_customer()
@@ -63,6 +72,11 @@ class MyHandler(BaseHTTPRequestHandler):
       message = {'status': 'success', 'message': 'Book removed successfully'}
       self.response(200, message)
 
+    if self.path == '/transaction':
+      self.record_transaction()
+      message = {'status': 'success', 'message': 'Transaction recorded successfully'}
+      self.response(200, message)
+
   def do_GET(self):
     if self.path == '/get_customers':
       customers = obj.viewCustomers()
@@ -72,6 +86,11 @@ class MyHandler(BaseHTTPRequestHandler):
     if self.path == '/get_books':
       books = obj.getBooks()
       message = {'status': 'success', 'customers': books}
+      self.response(200, message)
+
+    if self.path == '/get_logs':
+      logs = obj.getLogbook()
+      message = {'status': 'success', 'logs': logs}
       self.response(200, message)
 
 handler = MyHandler
