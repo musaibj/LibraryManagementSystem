@@ -2,7 +2,7 @@ import json, http
 from inventory import Inventory
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-obj = Inventory("localhost", "root", "MySQL@123", "Library")
+obj = Inventory('localhost', 'root', 'MySQL@123', 'library')
 
 class MyHandler(BaseHTTPRequestHandler):
   def response(self, responseCode, message):
@@ -20,9 +20,9 @@ class MyHandler(BaseHTTPRequestHandler):
   def register_customer(self):
     data = self.headerInfo()
     customer_name = data.get('customerName')
-    registration_date = data.get('registrationDate')
-    expiry_date = data.get('expiryDate')
-    obj.insertCustomer(customer_name, registration_date, expiry_date)
+    membership_months = data.get('membershipMonths')
+    books_issued = data.get('booksIssued')
+    obj.insertCustomer(customer_name, membership_months, books_issued)
   
   def remove_customer(self):
     data = self.headerInfo()
