@@ -32,10 +32,9 @@ class MyHandler(BaseHTTPRequestHandler):
   def add_book(self):
     data = self.headerInfo()
     bookName = data.get('BookName')
-    authorName = data.get('AuthorName')
+    authorName = data.get('Author')
     genre = data.get('Genre')
-    bookStatus = data.get('BookStatus')
-    obj.insertBook(bookName, authorName, genre, bookStatus)
+    obj.insertBook(bookName, authorName, genre)
 
   def remove_book(self):
     data = self.headerInfo()
@@ -44,12 +43,12 @@ class MyHandler(BaseHTTPRequestHandler):
 
   def record_transaction(self):
     data = self.headerInfo()
-    book_issue_date = data.get('bookIssueDate')
-    book_return_date = data.get('bookReturnDate')
-    issued_to = data.get('issuedTo')
-    customer_id = data.get('customerID')
-    book_id = data.get('bookID')
-    obj.recordTransaction(book_issue_date, book_return_date, issued_to, customer_id, book_id)
+    bookID = data.get('bookID')
+    bookName = data.get('bookName')
+    issuedTo = data.get('issuedTo')
+    issuedFrom = data.get('issuedFrom')
+    issuedTill = data.get('issuedTill')
+    obj.recordTransaction(issuedTo, issuedFrom, issuedTill, bookName, bookID)
 
   def do_POST(self):
     if self.path == '/register_customer':
