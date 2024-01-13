@@ -19,10 +19,9 @@ class MyHandler(BaseHTTPRequestHandler):
 
   def register_customer(self):
     data = self.headerInfo()
-    customer_name = data.get('customerName')
-    membership_months = data.get('membershipMonths')
-    books_issued = data.get('booksIssued')
-    obj.insertCustomer(customer_name, membership_months, books_issued)
+    customerName = data.get('customerName')
+    membershipMonths = data.get('membershipMonths')
+    obj.registerCustomer(customerName, membershipMonths)
   
   def remove_customer(self):
     data = self.headerInfo()

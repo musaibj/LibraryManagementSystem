@@ -14,37 +14,27 @@ class Inventory:
     self.createdb()
 
   def createdb(self):
-    self.cursor.execute("CREATE DATABASE IF NOT EXISTS library")
+    self.cursor.execute("CREATE DATABASE IF NOT EXISTS Library")
 
     self.cursor.execute("""
-      CREATE TABLE IF NOT EXISTS customers (
+      CREATE TABLE IF NOT EXISTS Customers (
         CustomerID INT AUTO_INCREMENT PRIMARY KEY,
-        CustomerName VARCHAR(255),
-        BooksIssued INT,
-        MembershipID INT,
-        MembershipFrom DATE,
-        MembershipTill DATE,
-        CurrentFine DECIMAL(10, 2)
-      )
+        CustomerName VARCHAR(255)
+        )
     """)
 
     self.cursor.execute("""
-      CREATE TABLE IF NOT EXISTS membership (
+      CREATE TABLE IF NOT EXISTS Membership (
         MembershipID INT AUTO_INCREMENT PRIMARY KEY,
-        MembershipFrom DATE,
-        MembershipTill DATE,
-        CustomerID INT, 
-        FOREIGN KEY (CustomerID) REFERENCES customers(CustomerID)
+        CustomerID INT,
+        MembershipIssued DATE,
+        MembershipExpire DATE,
+        CONSTRAINT fk_customer_membership FOREIGN KEY (CustomerID) REFERENCES Customers (CustomerID)
       )
     """)
 
     self.cursor.execute("""
-      ALTER TABLE customers
-      ADD FOREIGN KEY (MembershipID) REFERENCES membership(MembershipID)
-    """)
-
-    self.cursor.execute("""
-      CREATE TABLE IF NOT EXISTS books (
+      CREATE TABLE IF NOT EXISTS Books (
         BookID INT AUTO_INCREMENT PRIMARY KEY,
         BookName VARCHAR(255),
         Author VARCHAR(255),
@@ -54,53 +44,30 @@ class Inventory:
     """)
 
     self.cursor.execute("""
-      CREATE TABLE IF NOT EXISTS bookstatus (
-        IssuedTo INT,
-        IssuedFrom DATE,
-        IssuedTill DATE,
-        BookID INT,
-        BookName VARCHAR(255),
-        PRIMARY KEY (IssuedTo, BookID),
-        FOREIGN KEY (IssuedTo) REFERENCES customers(CustomerID),
-        FOREIGN KEY (BookID) REFERENCES books(BookID)
-      )
-    """)
-
-    self.cursor.execute("""
-      CREATE TABLE IF NOT EXISTS log (
+      CREATE TABLE IF NOT EXISTS Transactions (
         TransactionID INT AUTO_INCREMENT PRIMARY KEY,
-        IssuedTo INT,
-        IssuedFrom DATE,
-        IssuedTill DATE,
-        BookName VARCHAR(255),
+        CustomerID INT,
         BookID INT,
-        FOREIGN KEY (IssuedTo) REFERENCES customers(CustomerID),
-        FOREIGN KEY (IssuedFrom) REFERENCES bookstatus(IssuedFrom),
-        FOREIGN KEY (BookID) REFERENCES books(BookID)
-      )
-    """)
-
-    self.cursor.execute("""
-      CREATE TABLE IF NOT EXISTS finemanagement (
-        IssuedTo INT,
-        IssuedFrom DATE,
+        IssuedON DATE,
         IssuedTill DATE,
-        CurrentFine DECIMAL(10, 2),
-        PRIMARY KEY (IssuedTo),
-        FOREIGN KEY (IssuedTo) REFERENCES customers(CustomerID)
+        CONSTRAINT fk_customer_transaction FOREIGN KEY (CustomerID) REFERENCES Customers (CustomerID),
+        CONSTRAINT fk_book_transaction FOREIGN KEY (BookID) REFERENCES Books (BookID)
       )
     """)
 
-  def insertCustomer(self, customerName, membershipMonths, booksIssued):
+    self.mydb.commit()
+
+
+  def registerCustomer(self, customerName, membershipMonths):
     membershipFrom = datetime.date.today()
     membershipTill = membershipFrom + relativedelta(months=membershipMonths)
 
-    sql_insert_customer = "INSERT INTO customers (CustomerName, BooksIssued) VALUES (%s, %s)"
-    values_customer = (customerName, booksIssued)
+    sql_insert_customer = "INSERT INTO Customers (CustomerName) VALUES (%s)"
+    values_customer = (customerName,)
     self.cursor.execute(sql_insert_customer, values_customer)
   
     sql_insert_membership = """
-        INSERT INTO membership (MembershipFrom, MembershipTill, CustomerID)
+        INSERT INTO Membership (MembershipIssued, MembershipExpire, CustomerID)
         VALUES (%s, %s, LAST_INSERT_ID())
     """
     values_membership = (membershipFrom, membershipTill)
@@ -110,18 +77,14 @@ class Inventory:
 
   def viewCustomers(self):
     sql = """
-        SELECT customers.CustomerID as CustomerID,
-               customers.CustomerName as CustomerName,
-               customers.BooksIssued as BooksIssued,
-               membership.MembershipFrom as MembershipFrom,
-               membership.MembershipTill as MembershipTill
+        SELECT Customers.CustomerID, Customers.CustomerName, Membership.MembershipIssued, Membership.MembershipExpire
         FROM customers
-        INNER JOIN membership ON customers.CustomerID = membership.CustomerID
+        INNER JOIN Membership ON Customers.CustomerID = Membership.CustomerID
     """
     self.cursor.execute(sql)
     result = self.cursor.fetchall()
 
-    labels = ["CustomerID", "CustomerName", "BooksIssued", "MembershipFrom", "MembershipTill"]
+    labels = ["CustomerID", "CustomerName", "MembershipIssued", "MembershipExpire"]
     customers_data = []
     for x in result:
       customer_dict = {}
@@ -161,7 +124,6 @@ class Inventory:
 
     labels = ["BookID", "BookName", "Author", "Genre", "Quantity"]
     books_data = []
-
     for book_tuple in result:
         book_dict = {}
         for i in range(len(labels)):
@@ -190,10 +152,6 @@ class Inventory:
     valuesUpdateQuantity = (bookID,)
     self.cursor.execute(updateQuantity, valuesUpdateQuantity)
 
-    #updateBooksIssued = "UPDATE customers SET BooksIssued = BooksIssued + 1 WHERE CustomerID = %s"
-    #valuesUpdateBooksIssued = (customerID,)
-    #self.cursor.execute(sql_update_books_issued, values_update_books_issued)
-
     self.mydb.commit()
   
   def getLogbook(self):
@@ -215,8 +173,4 @@ class Inventory:
     cursor = self.mydb.cursor()
     cursor.execute(sql, values)
     self.mydb.commit()
-
 """
-
-obj = Inventory('localhost', 'root', 'MySQL@123', 'library')
-obj.createdb()
