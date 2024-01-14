@@ -42,12 +42,11 @@ class MyHandler(BaseHTTPRequestHandler):
 
   def record_transaction(self):
     data = self.headerInfo()
+    customerID = data.get('customerID')
     bookID = data.get('bookID')
-    bookName = data.get('bookName')
-    issuedTo = data.get('issuedTo')
-    issuedFrom = data.get('issuedFrom')
+    issuedOn = data.get('issuedOn')
     issuedTill = data.get('issuedTill')
-    obj.recordTransaction(issuedTo, issuedFrom, issuedTill, bookName, bookID)
+    obj.recordTransaction(customerID, bookID, issuedOn, issuedTill)
 
   def do_POST(self):
     if self.path == '/register_customer':

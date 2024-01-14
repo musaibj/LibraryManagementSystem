@@ -78,7 +78,7 @@ class Inventory:
   def viewCustomers(self):
     sql = """
         SELECT Customers.CustomerID, Customers.CustomerName, Membership.MembershipIssued, Membership.MembershipExpire
-        FROM customers
+        FROM Customers
         INNER JOIN Membership ON Customers.CustomerID = Membership.CustomerID
     """
     self.cursor.execute(sql)
@@ -116,9 +116,8 @@ class Inventory:
       self.cursor.execute(sql_insert, values_insert)
       self.mydb.commit()
 
-  
   def getBooks(self):
-    sql = "SELECT * FROM books"
+    sql = "SELECT * FROM Books"
     self.cursor.execute(sql)
     result = self.cursor.fetchall()
 
@@ -132,34 +131,38 @@ class Inventory:
 
     return books_data 
   
-  def recordTransaction(self, issuedTo, issuedFrom, issuedTill, bookName, bookID):
-    availability = "SELECT Quantity FROM books WHERE BookID = %s"
-    values_availability = (bookID,)
-    self.cursor.execute(availability, values_availability)
-    book_availability = self.cursor.fetchone()
+  def recordTransaction(self, customerID, bookID, issuedOn, issuedTill):
+      recordTransaction = "INSERT INTO Transactions (CustomerID, BookID, IssuedOn, IssuedTill) VALUES (%s, %s, %s, %s)"
+      valuesRecordTransaction = (customerID, bookID, issuedOn, issuedTill)
+      self.cursor.execute(recordTransaction, valuesRecordTransaction)
 
-    if not book_availability:
-      return {"status": "error", "message": "Book not available"}
+      updateQuantity = "UPDATE Books SET Quantity = Quantity - 1 WHERE BookID = %s"
+      valuesUpdateQuantity = (bookID,)
+      self.cursor.execute(updateQuantity, valuesUpdateQuantity)
 
-    recordTransaction = """
-        INSERT INTO log (IssuedTo, IssuedFrom, IssuedTill, BookName, BookID)
-        VALUES (%s, %s, %s, %s, %s)
-    """
-    valuesRecordTransaction = (issuedTo, issuedFrom, issuedTill, bookName, bookID)
-    self.cursor.execute(recordTransaction, valuesRecordTransaction)
-
-    updateQuantity = "UPDATE books SET Quantity = Quantity - 1 WHERE BookID = %s"
-    valuesUpdateQuantity = (bookID,)
-    self.cursor.execute(updateQuantity, valuesUpdateQuantity)
-
-    self.mydb.commit()
+      self.mydb.commit()
   
   def getLogbook(self):
-    sql = "SELECT * FROM log"
+    sql = "SELECT * FROM Transactions"
+    self.cursor.execute(sql)
+    result = self.cursor.fetchall()
+
+    labels = ["TransactionID", "CustomerID", "BookID", "IssuedOn", "IssuedTill"]
+    books_data = []
+    for book_tuple in result:
+        book_dict = {}
+        for i in range(len(labels)):
+            book_dict[labels[i]] = book_tuple[i]
+        books_data.append(book_dict)
+
+    return books_data 
+
+"""
+  def getLogbook(self):
+    sql = "SELECT * FROM Transactions"
     self.cursor.execute(sql)
     result = self.cursor.fetchall()
     return result
-"""
   def removeCustomer(self, customerID):
     sql = "DELETE FROM customer WHERE CustomerID = %s"
     values = (customerID,)
@@ -173,4 +176,14 @@ class Inventory:
     cursor = self.mydb.cursor()
     cursor.execute(sql, values)
     self.mydb.commit()
-"""
+
+   availability = "SELECT Quantity FROM Books WHERE BookID = %s"
+    values_availability = (bookID,)
+    self.cursor.execute(availability, values_availability)
+    book_availability = self.cursor.fetchone()
+
+    if not book_availability:
+      return {"status": "error", "message": "Book not available"}
+    else:
+obj = Inventory('localhost', 'root', 'MySQL@123', 'library')
+""" 
