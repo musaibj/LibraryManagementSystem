@@ -80,19 +80,22 @@ class Inventory:
         SELECT Customers.CustomerID, Customers.CustomerName, Membership.MembershipIssued, Membership.MembershipExpire
         FROM Customers
         INNER JOIN Membership ON Customers.CustomerID = Membership.CustomerID
-    """
+        """
     self.cursor.execute(sql)
     result = self.cursor.fetchall()
 
     labels = ["CustomerID", "CustomerName", "MembershipIssued", "MembershipExpire"]
-    customers_data = []
+    customersData = []
     for x in result:
-      customer_dict = {}
+      customerData = {}
       for i in range(len(labels)):
-          customer_dict[labels[i]] = x[i]
-      customers_data.append(customer_dict)
+        customerData[labels[i]] = x[i]
+      customersData.append(customerData)
 
-    return customers_data
+    return customersData
+  
+  def customerStatus(self):
+    pass
 
   def insertBook(self, bookName, authorName, genre):
     sql_check = "SELECT * FROM books WHERE BookName = %s"
@@ -111,7 +114,7 @@ class Inventory:
       self.cursor.execute(sql_update, values_update)
       self.mydb.commit()
     else:
-      sql_insert = "INSERT INTO books (BookName, Author, Genre, Quantity) VALUES (%s, %s, %s, 1)"
+      sql_insert = "INSERT INTO Books (BookName, Author, Genre, Quantity) VALUES (%s, %s, %s, 1)"
       values_insert = (bookName, authorName, genre)
       self.cursor.execute(sql_insert, values_insert)
       self.mydb.commit()
@@ -122,16 +125,49 @@ class Inventory:
     result = self.cursor.fetchall()
 
     labels = ["BookID", "BookName", "Author", "Genre", "Quantity"]
-    books_data = []
-    for book_tuple in result:
-        book_dict = {}
-        for i in range(len(labels)):
-            book_dict[labels[i]] = book_tuple[i]
-        books_data.append(book_dict)
+    booksData = []
+    for bookTuple in result:
+      bookDict = {}
+      for i in range(len(labels)):
+        bookDict[labels[i]] = bookTuple[i]
+      booksData.append(bookDict)
 
-    return books_data 
+    return booksData 
+  
+  def getBookStatus(self, bookID): 
+    sql = """
+          SELECT BookName, Author, Genre, Quantity FROM Books WHERE BookID = %s
+          UNION
+          SELECT TransactionID, CustomerID, IssuedOn, IssuedTill FROM Transactions WHERE BookID = %s
+        """
+    value = (bookID, bookID)
+    self.cursor.execute(sql, value)
+    result = self.cursor.fetchall()
+
+    labels = ["BookName", "Author", "Genre", "Quantity"]
+    labels2 = ["TransactionID", "CustomerID", "IssuedOn", "IssuedTill"]
+    booksData = []
+    firstBookTuple = result[0]
+    bookDict = {}
+    for i in range(len(labels)):
+      bookDict[labels[i]] = firstBookTuple[i]
+    booksData.append(bookDict)
+    for bookTuple in result[1:]:
+      bookDict = {}
+      for i in range(1, len(labels2)):
+        bookDict[labels2[i]] = bookTuple[i]
+      booksData.append(bookDict)
+    return booksData
   
   def recordTransaction(self, customerID, bookID, issuedOn, issuedTill):
+    availability = "SELECT Quantity FROM Books WHERE BookID = %s"
+    valuesAvailability = (bookID,)
+    self.cursor.execute(availability, valuesAvailability)
+    book_availability = self.cursor.fetchone()
+
+    if not book_availability:
+      return {"status": "error", "message": "Book not available"}
+    else:
       recordTransaction = "INSERT INTO Transactions (CustomerID, BookID, IssuedOn, IssuedTill) VALUES (%s, %s, %s, %s)"
       valuesRecordTransaction = (customerID, bookID, issuedOn, issuedTill)
       self.cursor.execute(recordTransaction, valuesRecordTransaction)
@@ -148,21 +184,16 @@ class Inventory:
     result = self.cursor.fetchall()
 
     labels = ["TransactionID", "CustomerID", "BookID", "IssuedOn", "IssuedTill"]
-    books_data = []
-    for book_tuple in result:
-        book_dict = {}
+    booksData = []
+    for bookTuple in result:
+        bookDict = {}
         for i in range(len(labels)):
-            book_dict[labels[i]] = book_tuple[i]
-        books_data.append(book_dict)
+            bookDict[labels[i]] = bookTuple[i]
+        booksData.append(bookDict)
 
-    return books_data 
+    return booksData 
 
 """
-  def getLogbook(self):
-    sql = "SELECT * FROM Transactions"
-    self.cursor.execute(sql)
-    result = self.cursor.fetchall()
-    return result
   def removeCustomer(self, customerID):
     sql = "DELETE FROM customer WHERE CustomerID = %s"
     values = (customerID,)
@@ -176,14 +207,4 @@ class Inventory:
     cursor = self.mydb.cursor()
     cursor.execute(sql, values)
     self.mydb.commit()
-
-   availability = "SELECT Quantity FROM Books WHERE BookID = %s"
-    values_availability = (bookID,)
-    self.cursor.execute(availability, values_availability)
-    book_availability = self.cursor.fetchone()
-
-    if not book_availability:
-      return {"status": "error", "message": "Book not available"}
-    else:
-obj = Inventory('localhost', 'root', 'MySQL@123', 'library')
-""" 
+"""

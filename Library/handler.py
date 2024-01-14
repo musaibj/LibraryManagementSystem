@@ -48,6 +48,11 @@ class MyHandler(BaseHTTPRequestHandler):
     issuedTill = data.get('issuedTill')
     obj.recordTransaction(customerID, bookID, issuedOn, issuedTill)
 
+  def get_book_status(self):
+    data = self.headerInfo()
+    bookID = data.get('bookID')
+    return obj.getBookStatus(bookID)
+
   def do_POST(self):
     if self.path == '/register_customer':
       self.register_customer()
@@ -72,6 +77,11 @@ class MyHandler(BaseHTTPRequestHandler):
     if self.path == '/transaction':
       self.record_transaction()
       message = {'status': 'success', 'message': 'Transaction recorded successfully'}
+      self.response(200, message)
+    
+    if self.path == '/book_status':
+      status =  self.get_book_status()
+      message = {'status': 'success', 'customers': status}
       self.response(200, message)
 
   def do_GET(self):
