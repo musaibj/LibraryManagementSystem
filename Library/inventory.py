@@ -76,7 +76,18 @@ class Inventory:
 
   def viewCustomers(self, customerID = None):
     if customerID is not None:
-      pass
+      sql = """
+          SELECT Customers.CustomerID, Customers.CustomerName, Membership.MembershipIssued, Membership.MembershipExpire, Transactions.TransactionID, Transactions.BookID, Transactions.IssuedOn, Transactions.IssuedTill
+          FROM Customers
+          INNER JOIN Membership ON Customers.CustomerID = Membership.CustomerID
+          INNER JOIN Transactions ON Membership.CustomerID = Transactions.CustomerID
+          WHERE Customers.CustomerID = %s
+          """
+      values = (customerID,)
+      self.cursor.execute(sql, values)
+      result = self.cursor.fetchall()
+      labels = ["CustomerID", "CustomerName", "MembershipIssued", "MembershipExpire", "TransactionID", "BookID", "IssuedOn", "IssuedTill"]
+      return self.display(labels, result)
     else:
       sql = """
           SELECT Customers.CustomerID, Customers.CustomerName, Membership.MembershipIssued, Membership.MembershipExpire
@@ -85,15 +96,8 @@ class Inventory:
           """
       self.cursor.execute(sql)
       result = self.cursor.fetchall()
-
       labels = ["CustomerID", "CustomerName", "MembershipIssued", "MembershipExpire"]
-      customersData = []
-      for x in result:
-        customerData = {}
-        for i in range(len(labels)):
-          customerData[labels[i]] = x[i]
-        customersData.append(customerData)
-      return customersData
+      return self.display(labels, result)
 
   def insertBook(self, bookName, authorName, genre):
     sql_check = "SELECT * FROM books WHERE BookName = %s"
@@ -120,41 +124,22 @@ class Inventory:
   def getBooks(self, bookID = None):
     if bookID is not None:
       sql = """
-          SELECT BookName, Author, Genre, Quantity FROM Books WHERE BookID = %s
-          UNION
-          SELECT TransactionID, CustomerID, IssuedOn, IssuedTill FROM Transactions WHERE BookID = %s
+          SELECT Books.BookName, Books.Author, Books.Genre, Books.Quantity, Transactions.TransactionID, Transactions.CustomerID, Transactions.IssuedOn, Transactions.IssuedTill
+          FROM Books
+          INNER JOIN Transactions ON Books.BookID = Transactions.BookID
+          WHERE Books.BookID = %s;
         """
-      value = (bookID, bookID)
+      value = (bookID,)
       self.cursor.execute(sql, value)
       result = self.cursor.fetchall()
-
-      labels = ["BookName", "Author", "Genre", "Quantity"]
-      labels2 = ["TransactionID", "CustomerID", "IssuedOn", "IssuedTill"]
-      booksData = []
-      firstBookTuple = result[0]
-      bookDict = {}
-      for i in range(len(labels)):
-        bookDict[labels[i]] = firstBookTuple[i]
-      booksData.append(bookDict)
-      for bookTuple in result[1:]:
-        bookDict = {}
-        for i in range(1, len(labels2)):
-          bookDict[labels2[i]] = bookTuple[i]
-        booksData.append(bookDict)
-      return booksData
+      labels = ["BookName", "Author", "Genre", "Quantity", "TransactionID", "CustomerID", "IssuedOn", "IssuedTill"]
+      return self.display(labels, result)
     else:
       sql = "SELECT * FROM Books"
       self.cursor.execute(sql)
       result = self.cursor.fetchall()
-
       labels = ["BookID", "BookName", "Author", "Genre", "Quantity"]
-      booksData = []
-      for bookTuple in result:
-        bookDict = {}
-        for i in range(len(labels)):
-          bookDict[labels[i]] = bookTuple[i]
-        booksData.append(bookDict)
-      return booksData 
+      return self.display(labels, result) 
   
   def recordTransaction(self, customerID, bookID, issuedOn, issuedTill):
     availability = "SELECT Quantity FROM Books WHERE BookID = %s"
@@ -179,16 +164,17 @@ class Inventory:
     sql = "SELECT * FROM Transactions"
     self.cursor.execute(sql)
     result = self.cursor.fetchall()
-
     labels = ["TransactionID", "CustomerID", "BookID", "IssuedOn", "IssuedTill"]
+    return self.display(labels, result)
+
+  def display(self, labels, result):
     booksData = []
     for bookTuple in result:
-        bookDict = {}
-        for i in range(len(labels)):
-            bookDict[labels[i]] = bookTuple[i]
-        booksData.append(bookDict)
-
-    return booksData 
+      bookDict = {}
+      for i in range(len(labels)):
+        bookDict[labels[i]] = bookTuple[i]
+      booksData.append(bookDict)
+    return booksData
 
 """
   def removeCustomer(self, customerID):
