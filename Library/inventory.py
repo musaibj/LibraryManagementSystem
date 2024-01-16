@@ -74,27 +74,26 @@ class Inventory:
 
     self.mydb.commit()
 
-  def viewCustomers(self):
-    sql = """
-        SELECT Customers.CustomerID, Customers.CustomerName, Membership.MembershipIssued, Membership.MembershipExpire
-        FROM Customers
-        INNER JOIN Membership ON Customers.CustomerID = Membership.CustomerID
-        """
-    self.cursor.execute(sql)
-    result = self.cursor.fetchall()
+  def viewCustomers(self, customerID = None):
+    if customerID is not None:
+      pass
+    else:
+      sql = """
+          SELECT Customers.CustomerID, Customers.CustomerName, Membership.MembershipIssued, Membership.MembershipExpire
+          FROM Customers
+          INNER JOIN Membership ON Customers.CustomerID = Membership.CustomerID
+          """
+      self.cursor.execute(sql)
+      result = self.cursor.fetchall()
 
-    labels = ["CustomerID", "CustomerName", "MembershipIssued", "MembershipExpire"]
-    customersData = []
-    for x in result:
-      customerData = {}
-      for i in range(len(labels)):
-        customerData[labels[i]] = x[i]
-      customersData.append(customerData)
-
-    return customersData
-  
-  def customerStatus(self):
-    pass
+      labels = ["CustomerID", "CustomerName", "MembershipIssued", "MembershipExpire"]
+      customersData = []
+      for x in result:
+        customerData = {}
+        for i in range(len(labels)):
+          customerData[labels[i]] = x[i]
+        customersData.append(customerData)
+      return customersData
 
   def insertBook(self, bookName, authorName, genre):
     sql_check = "SELECT * FROM books WHERE BookName = %s"
@@ -118,7 +117,7 @@ class Inventory:
       self.cursor.execute(sql_insert, values_insert)
       self.mydb.commit()
 
-  def getBooks(self, bookID=None):
+  def getBooks(self, bookID = None):
     if bookID is not None:
       sql = """
           SELECT BookName, Author, Genre, Quantity FROM Books WHERE BookID = %s
