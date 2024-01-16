@@ -8,7 +8,7 @@ class Inventory:
       host = host,
       user = user,
       passwd = passwd,
-      database = database.lower()
+      database = database
     )
     self.cursor = self.mydb.cursor()
     self.createdb()
@@ -56,7 +56,6 @@ class Inventory:
     """)
 
     self.mydb.commit()
-
 
   def registerCustomer(self, customerName, membershipMonths):
     membershipFrom = datetime.date.today()
@@ -119,45 +118,44 @@ class Inventory:
       self.cursor.execute(sql_insert, values_insert)
       self.mydb.commit()
 
-  def getBooks(self):
-    sql = "SELECT * FROM Books"
-    self.cursor.execute(sql)
-    result = self.cursor.fetchall()
-
-    labels = ["BookID", "BookName", "Author", "Genre", "Quantity"]
-    booksData = []
-    for bookTuple in result:
-      bookDict = {}
-      for i in range(len(labels)):
-        bookDict[labels[i]] = bookTuple[i]
-      booksData.append(bookDict)
-
-    return booksData 
-  
-  def getBookStatus(self, bookID): 
-    sql = """
+  def getBooks(self, bookID=None):
+    if bookID is not None:
+      sql = """
           SELECT BookName, Author, Genre, Quantity FROM Books WHERE BookID = %s
           UNION
           SELECT TransactionID, CustomerID, IssuedOn, IssuedTill FROM Transactions WHERE BookID = %s
         """
-    value = (bookID, bookID)
-    self.cursor.execute(sql, value)
-    result = self.cursor.fetchall()
+      value = (bookID, bookID)
+      self.cursor.execute(sql, value)
+      result = self.cursor.fetchall()
 
-    labels = ["BookName", "Author", "Genre", "Quantity"]
-    labels2 = ["TransactionID", "CustomerID", "IssuedOn", "IssuedTill"]
-    booksData = []
-    firstBookTuple = result[0]
-    bookDict = {}
-    for i in range(len(labels)):
-      bookDict[labels[i]] = firstBookTuple[i]
-    booksData.append(bookDict)
-    for bookTuple in result[1:]:
+      labels = ["BookName", "Author", "Genre", "Quantity"]
+      labels2 = ["TransactionID", "CustomerID", "IssuedOn", "IssuedTill"]
+      booksData = []
+      firstBookTuple = result[0]
       bookDict = {}
-      for i in range(1, len(labels2)):
-        bookDict[labels2[i]] = bookTuple[i]
+      for i in range(len(labels)):
+        bookDict[labels[i]] = firstBookTuple[i]
       booksData.append(bookDict)
-    return booksData
+      for bookTuple in result[1:]:
+        bookDict = {}
+        for i in range(1, len(labels2)):
+          bookDict[labels2[i]] = bookTuple[i]
+        booksData.append(bookDict)
+      return booksData
+    else:
+      sql = "SELECT * FROM Books"
+      self.cursor.execute(sql)
+      result = self.cursor.fetchall()
+
+      labels = ["BookID", "BookName", "Author", "Genre", "Quantity"]
+      booksData = []
+      for bookTuple in result:
+        bookDict = {}
+        for i in range(len(labels)):
+          bookDict[labels[i]] = bookTuple[i]
+        booksData.append(bookDict)
+      return booksData 
   
   def recordTransaction(self, customerID, bookID, issuedOn, issuedTill):
     availability = "SELECT Quantity FROM Books WHERE BookID = %s"
@@ -207,4 +205,5 @@ class Inventory:
     cursor = self.mydb.cursor()
     cursor.execute(sql, values)
     self.mydb.commit()
+obj = Inventory('localhost', 'root', 'MySQL@123', 'library')
 """
