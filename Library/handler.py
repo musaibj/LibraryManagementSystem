@@ -2,7 +2,7 @@ import json, http
 from inventory import Inventory
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-obj = Inventory("localhost", "root", "MySQL@123", "Library")
+obj = Inventory('localhost', 'root', 'MySQL@123', 'library')
 
 class MyHandler(BaseHTTPRequestHandler):
   def response(self, responseCode, message):
@@ -19,10 +19,9 @@ class MyHandler(BaseHTTPRequestHandler):
 
   def register_customer(self):
     data = self.headerInfo()
-    customer_name = data.get('customerName')
-    registration_date = data.get('registrationDate')
-    expiry_date = data.get('expiryDate')
-    obj.insertCustomer(customer_name, registration_date, expiry_date)
+    customerName = data.get('customerName')
+    membershipMonths = data.get('membershipMonths')
+    obj.registerCustomer(customerName, membershipMonths)
   
   def remove_customer(self):
     data = self.headerInfo()
@@ -32,15 +31,42 @@ class MyHandler(BaseHTTPRequestHandler):
   def add_book(self):
     data = self.headerInfo()
     bookName = data.get('BookName')
-    authorName = data.get('AuthorName')
+    authorName = data.get('Author')
     genre = data.get('Genre')
-    bookStatus = data.get('BookStatus')
-    obj.insertBook(bookName, authorName, genre, bookStatus)
+    obj.insertBook(bookName, authorName, genre)
 
   def remove_book(self):
     data = self.headerInfo()
     bookName = data.get('BookName')
     obj.removeBook(bookName)
+
+  def record_transaction(self):
+    data = self.headerInfo()
+    customerID = data.get('customerID')
+    bookID = data.get('bookID')
+    issuedOn = data.get('issuedOn')
+    issuedTill = data.get('issuedTill')
+    obj.recordTransaction(customerID, bookID, issuedOn, issuedTill)
+
+  def get_books(self, bookID = 0):
+    data = self.headerInfo()
+    bookID_from_data = data.get('bookID')
+    if bookID_from_data != 0:
+      bookID = bookID_from_data
+    if bookID != 0:
+      return obj.getBooks(bookID_from_data)
+    else:
+      return obj.getBooks()
+    
+  def get_customers(self, customerID = 0):
+    data = self.headerInfo()
+    customerID_from_data = data.get('customerID')
+    if customerID_from_data != 0:
+      customerID = customerID_from_data
+    if customerID != 0:
+      return obj.viewCustomers(customerID_from_data)
+    else:
+      return obj.viewCustomers()
 
   def do_POST(self):
     if self.path == '/register_customer':
@@ -63,15 +89,25 @@ class MyHandler(BaseHTTPRequestHandler):
       message = {'status': 'success', 'message': 'Book removed successfully'}
       self.response(200, message)
 
+    if self.path == '/transaction':
+      self.record_transaction()
+      message = {'status': 'success', 'message': 'Transaction recorded successfully'}
+      self.response(200, message)
+
   def do_GET(self):
     if self.path == '/get_customers':
-      customers = obj.viewCustomers()
+      customers = self.get_customers()
       message = {'status': 'success', 'customers': customers}
       self.response(200, message)
 
     if self.path == '/get_books':
-      books = obj.getBooks()
+      books = self.get_books()
       message = {'status': 'success', 'customers': books}
+      self.response(200, message)
+
+    if self.path == '/get_logs':
+      logs = obj.getLogbook()
+      message = {'status': 'success', 'logs': logs}
       self.response(200, message)
 
 handler = MyHandler
