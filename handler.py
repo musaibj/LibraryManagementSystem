@@ -13,7 +13,6 @@ class MyHandler(BaseHTTPRequestHandler):
     self.wfile.write(json.dumps(message, default=str).encode('utf-8'))
 
   def headerInfo(self):
-    print(f"Content-Length Header: {self.headers.get('Content-Length')}")
     contentLength = int(self.headers.get('Content-Length'))
     getData = self.rfile.read(contentLength)
     data = json.loads(getData.decode('utf-8'))
@@ -63,14 +62,12 @@ class MyHandler(BaseHTTPRequestHandler):
   def get_customers(self):
     query_params = parse_qs(urlparse(self.path).query)
     customerID_from_params = query_params.get('customerID', None)
-    
+
     if customerID_from_params:
       customerID = int(customerID_from_params[0])
       return obj.viewCustomers(customerID)
     else:
-      customerID = 0
       return obj.viewCustomers()
-
 
   def do_POST(self):
     if self.path == '/register_customer':
