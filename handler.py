@@ -1,6 +1,7 @@
 import json, http
 from inventory import Inventory
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from urllib.parse import urlparse, parse_qs
 
 obj = Inventory('localhost', 'root', 'MySQL@123', 'library')
 
@@ -12,7 +13,8 @@ class MyHandler(BaseHTTPRequestHandler):
     self.wfile.write(json.dumps(message, default=str).encode('utf-8'))
 
   def headerInfo(self):
-    contentLength = int(self.headers['Content-Length'])
+    print(f"Content-Length Header: {self.headers.get('Content-Length')}")
+    contentLength = int(self.headers.get('Content-Length'))
     getData = self.rfile.read(contentLength)
     data = json.loads(getData.decode('utf-8'))
     return data
@@ -58,15 +60,17 @@ class MyHandler(BaseHTTPRequestHandler):
     else:
       return obj.getBooks()
     
-  def get_customers(self, customerID = 0):
-    data = self.headerInfo()
-    customerID_from_data = data.get('customerID')
-    if customerID_from_data != 0:
-      customerID = customerID_from_data
-    if customerID != 0:
-      return obj.viewCustomers(customerID_from_data)
+  def get_customers(self):
+    query_params = parse_qs(urlparse(self.path).query)
+    customerID_from_params = query_params.get('customerID', None)
+    
+    if customerID_from_params:
+      customerID = int(customerID_from_params[0])
+      return obj.viewCustomers(customerID)
     else:
+      customerID = 0
       return obj.viewCustomers()
+
 
   def do_POST(self):
     if self.path == '/register_customer':
@@ -95,7 +99,7 @@ class MyHandler(BaseHTTPRequestHandler):
       self.response(200, message)
 
   def do_GET(self):
-    if self.path == '/get_customers':
+    if self.path.startswith('/get_customers/'):
       customers = self.get_customers()
       message = {'status': 'success', 'customers': customers}
       self.response(200, message)
